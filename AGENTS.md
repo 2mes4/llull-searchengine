@@ -76,7 +76,7 @@ deploy/docs/                    Linux installation guide
 
 ## Data Source Development
 
-See `skills/create-datasource/SKILL.md` for the guide on building new data source connectors.
+See `skills/llull-searchengine-datasources-creator/SKILL.md` for the guide on building new data source connectors.
 
 Every connector must:
 1. Implement `datasource.Connector` interface

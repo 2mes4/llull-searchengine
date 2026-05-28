@@ -60,7 +60,7 @@ cd ui-components/flutter && flutter test
 4. Include README with configuration table
 5. Add tests
 
-See `skills/create-datasource/SKILL.md` for the full guide.
+See `skills/llull-searchengine-datasources-creator/SKILL.md` for the full guide.
 
 ## Frontend Contribution
 

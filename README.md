@@ -171,7 +171,7 @@ Llull works in parallel with your database platform. It doesn't replace it — i
 
 Each data source directory contains a `README.md` with connection parameters, schema requirements, and setup instructions. All connectors implement the `datasource.Connector` interface in `internal/datasource/`.
 
-See [`skills/create-datasource/SKILL.md`](skills/create-datasource/SKILL.md) for the guide on building custom connectors.
+See [`skills/llull-searchengine-datasources-creator/SKILL.md`](skills/llull-searchengine-datasources-creator/SKILL.md) for the guide on building custom connectors.
 
 ---
 
@@ -265,7 +265,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) and the [contributor skill](skills/llull-
 |-------|-------------|
 | [`llull-searchengine-contributor`](skills/llull-searchengine-contributor/SKILL.md) | How to contribute data sources and frontend components |
 | [`llull-searchengine-deployment`](skills/llull-searchengine-deployment/SKILL.md) | How to deploy and integrate with JS/Python |
-| [`create-datasource`](skills/create-datasource/SKILL.md) | Step-by-step guide for building new connectors |
+| `llull-searchengine-datasources-creator` | Step-by-step guide for building new connectors |
 
 ---
 
