@@ -15,6 +15,7 @@ type Event struct {
 type Config struct {
 	Type           string            `json:"type"`
 	Connection     string            `json:"connection"`
+	Index          string            `json:"index"`
 	Fields         []string          `json:"fields"`
 	WeightField    string            `json:"weight_field"`
 	Collection     string            `json:"collection"`

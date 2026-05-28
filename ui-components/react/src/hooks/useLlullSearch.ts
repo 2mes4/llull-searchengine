@@ -3,6 +3,7 @@ import type { LlullSearchResponse, LlullSearchResult } from '../types';
 
 interface UseLlullSearchConfig {
   host: string;
+  index?: string;
   authToken?: string;
 }
 
@@ -39,7 +40,8 @@ export function useLlullSearch(config: UseLlullSearchConfig) {
         params.set('weight_impact', String(options.weightImpact || 0.3));
       }
 
-      const res = await fetch(`${config.host}/v1/search?${params}`, {
+      const basePath = config.index ? `/v1/${config.index}/search` : '/v1/search';
+      const res = await fetch(`${config.host}${basePath}?${params}`, {
         signal: abortRef.current.signal,
         headers: config.authToken
           ? { Authorization: `Bearer ${config.authToken}` }

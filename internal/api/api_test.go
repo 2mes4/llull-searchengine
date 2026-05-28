@@ -12,18 +12,19 @@ import (
 	"github.com/2mes4/llull/internal/worker"
 )
 
-func setupTestAPI(t *testing.T) (*httptest.Server, *engine.SearchEngine) {
+func setupTestAPI(t *testing.T) (*httptest.Server, *engine.SearchEngine, *engine.IndexManager) {
 	t.Helper()
-	eng := engine.NewSearchEngine("")
+	eng := engine.NewSearchEngine("test")
+	mgr := engine.NewIndexManager(t.TempDir(), 30*time.Minute, "test")
 	pool := worker.NewPool(eng, 100, 2)
 	t.Cleanup(func() { pool.Stop() })
-	handlers := NewHandlers(eng, pool, "test-token")
+	handlers := NewHandlers(mgr, pool, "test-token")
 	router := NewRouter(handlers)
-	return httptest.NewServer(router), eng
+	return httptest.NewServer(router), eng, mgr
 }
 
 func TestHealthEndpoint(t *testing.T) {
-	srv, _ := setupTestAPI(t)
+	srv, _, _ := setupTestAPI(t)
 	defer srv.Close()
 
 	resp, err := http.Get(srv.URL + "/v1/health")
@@ -44,7 +45,7 @@ func TestHealthEndpoint(t *testing.T) {
 }
 
 func TestIndexEndpointAuth(t *testing.T) {
-	srv, _ := setupTestAPI(t)
+	srv, _, _ := setupTestAPI(t)
 	defer srv.Close()
 
 	resp, err := http.Post(srv.URL+"/v1/index", "application/json", strings.NewReader(`{"id":"doc1"}`))
@@ -59,7 +60,7 @@ func TestIndexEndpointAuth(t *testing.T) {
 }
 
 func TestIndexEndpointSuccess(t *testing.T) {
-	srv, _ := setupTestAPI(t)
+	srv, eng, _ := setupTestAPI(t)
 	defer srv.Close()
 
 	req, _ := http.NewRequest("POST", srv.URL+"/v1/index", strings.NewReader(`{
@@ -83,13 +84,15 @@ func TestIndexEndpointSuccess(t *testing.T) {
 		t.Fatalf("Expected 202, got %d", resp.StatusCode)
 	}
 
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(50 * time.Millisecond)
+	_ = eng
 }
 
 func TestSearchEndpoint(t *testing.T) {
-	srv, eng := setupTestAPI(t)
+	srv, _, mgr := setupTestAPI(t)
 	defer srv.Close()
 
+	eng := mgr.GetOrCreateIndex("test")
 	eng.IndexDocument(engine.IndexPayload{
 		ID:     "doc1",
 		Action: "INDEX",
@@ -121,7 +124,7 @@ func TestSearchEndpoint(t *testing.T) {
 }
 
 func TestSearchEmptyQuery(t *testing.T) {
-	srv, _ := setupTestAPI(t)
+	srv, _, _ := setupTestAPI(t)
 	defer srv.Close()
 
 	resp, err := http.Get(srv.URL + "/v1/search?q=")
@@ -139,9 +142,10 @@ func TestSearchEmptyQuery(t *testing.T) {
 }
 
 func TestSearchWithWeight(t *testing.T) {
-	srv, eng := setupTestAPI(t)
+	srv, _, mgr := setupTestAPI(t)
 	defer srv.Close()
 
+	eng := mgr.GetOrCreateIndex("test")
 	eng.IndexDocument(engine.IndexPayload{
 		ID:     "doc1",
 		Action: "INDEX",
@@ -180,7 +184,7 @@ func TestSearchWithWeight(t *testing.T) {
 }
 
 func TestIndexEndpointMissingID(t *testing.T) {
-	srv, _ := setupTestAPI(t)
+	srv, _, _ := setupTestAPI(t)
 	defer srv.Close()
 
 	req, _ := http.NewRequest("POST", srv.URL+"/v1/index", strings.NewReader(`{"action":"INDEX"}`))
@@ -195,5 +199,54 @@ func TestIndexEndpointMissingID(t *testing.T) {
 
 	if resp.StatusCode != 400 {
 		t.Fatalf("Expected 400 for missing ID, got %d", resp.StatusCode)
+	}
+}
+
+func TestMultiIndexSearch(t *testing.T) {
+	srv, _, mgr := setupTestAPI(t)
+	defer srv.Close()
+
+	engA := mgr.GetOrCreateIndex("index-a")
+	engA.IndexDocument(engine.IndexPayload{
+		ID:     "doc1",
+		Action: "INDEX",
+		Fields: map[string]interface{}{
+			"title":   "Document in A",
+			"content": "hello world from index a",
+		},
+	})
+
+	engB := mgr.GetOrCreateIndex("index-b")
+	engB.IndexDocument(engine.IndexPayload{
+		ID:     "doc1",
+		Action: "INDEX",
+		Fields: map[string]interface{}{
+			"title":   "Document in B",
+			"content": "hello world from index b",
+		},
+	})
+
+	resp, err := http.Get(srv.URL + "/v1/index-a/search?q=hello&page=1&hits_per_page=10")
+	if err != nil {
+		t.Fatalf("Request failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	var resultA engine.PaginatedResponse
+	json.NewDecoder(resp.Body).Decode(&resultA)
+	if resultA.TotalHits != 1 {
+		t.Errorf("Index A: expected 1 hit, got %d", resultA.TotalHits)
+	}
+
+	resp, err = http.Get(srv.URL + "/v1/index-b/search?q=hello&page=1&hits_per_page=10")
+	if err != nil {
+		t.Fatalf("Request failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	var resultB engine.PaginatedResponse
+	json.NewDecoder(resp.Body).Decode(&resultB)
+	if resultB.TotalHits != 1 {
+		t.Errorf("Index B: expected 1 hit, got %d", resultB.TotalHits)
 	}
 }

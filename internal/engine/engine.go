@@ -155,6 +155,13 @@ func (se *SearchEngine) DataSource() string {
 	return se.dataSource
 }
 
+func (se *SearchEngine) SetIndexName(name string) {
+	se.mu.Lock()
+	defer se.mu.Unlock()
+	se.dataSource = name
+	se.startedAt = time.Now()
+}
+
 func (se *SearchEngine) SetPersistPath(path string) {
 	se.mu.Lock()
 	defer se.mu.Unlock()

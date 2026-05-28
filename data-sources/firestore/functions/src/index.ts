@@ -5,12 +5,21 @@ const ENDPOINT_URL = process.env.ENDPOINT_URL || "";
 const AUTH_TOKEN = process.env.AUTH_TOKEN || "";
 const INDEXABLE_FIELDS = (process.env.INDEXABLE_FIELDS || "").split(",").map((f) => f.trim()).filter(Boolean);
 const WEIGHT_FIELD = process.env.WEIGHT_FIELD || "";
+const INDEX_NAME = process.env.INDEX_NAME || "";
 
 interface SyncPayload {
   id: string;
   action: "INDEX" | "DELETE";
   fields?: Record<string, unknown>;
   updated_at?: number;
+}
+
+function getIndexUrl(): string {
+  const index = INDEX_NAME;
+  if (!index) {
+    return ENDPOINT_URL;
+  }
+  return ENDPOINT_URL.replace(/\/v1\/[^/]+\/index$/, `/v1/${index}/index`);
 }
 
 export const syncToMuntaner = onDocumentWritten(
@@ -58,13 +67,10 @@ export const syncToMuntaner = onDocumentWritten(
 );
 
 async function sendToEngine(payload: SyncPayload): Promise<void> {
-  if (!ENDPOINT_URL) {
-    logger.error("ENDPOINT_URL is not configured");
-    return;
-  }
+  const url = getIndexUrl();
 
   try {
-    const response = await fetch(ENDPOINT_URL, {
+    const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

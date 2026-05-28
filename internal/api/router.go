@@ -21,8 +21,13 @@ func NewRouter(h *Handlers) http.Handler {
 	r.Use(loggingMiddleware)
 
 	r.Get("/v1/health", h.Health)
-	r.Post("/v1/index", h.Index)
+	r.Get("/v1/indices", h.Indices)
+
+	r.Post("/v1/index", h.IndexHandlerLegacy)
 	r.Get("/v1/search", h.Search)
+
+	r.Post("/v1/{index}/index", h.Index)
+	r.Get("/v1/{index}/search", h.Search)
 
 	return r
 }

@@ -5,6 +5,7 @@ import 'types.dart';
 class LlullSearchDropdown extends StatefulWidget {
   final String host;
   final String? authToken;
+  final String index;
   final String placeholder;
   final int debounceMs;
   final int minChars;
@@ -15,6 +16,7 @@ class LlullSearchDropdown extends StatefulWidget {
     super.key,
     required this.host,
     this.authToken,
+    this.index = '',
     this.placeholder = 'Search...',
     this.debounceMs = 200,
     this.minChars = 2,
@@ -28,9 +30,10 @@ class LlullSearchDropdown extends StatefulWidget {
 
 class _LlullSearchDropdownState extends State<LlullSearchDropdown> {
   final controller = TextEditingController();
-  final _searchController = LlullSearchController(
-    host: '', // set in initState
+  late final _searchController = LlullSearchController(
+    host: '',
     authToken: null,
+    index: widget.index,
   );
   final _focusNode = FocusNode();
   bool _open = false;

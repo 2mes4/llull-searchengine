@@ -35,6 +35,7 @@ type PaginatedResponse struct {
 	NbPages     int            `json:"nb_pages"`
 	HitsPerPage int            `json:"hits_per_page"`
 	Query       string         `json:"query"`
+	Index       string         `json:"index,omitempty"`
 	QueryTime   int64          `json:"query_time"`
 }
 

@@ -6,6 +6,7 @@ import 'types.dart';
 class LlullSearchController {
   final String host;
   final String? authToken;
+  final String index;
   final http.Client _client = http.Client();
 
   List<LlullSearchResult> results = [];
@@ -14,7 +15,7 @@ class LlullSearchController {
   String? error;
   Completer? _abortCompleter;
 
-  LlullSearchController({required this.host, this.authToken});
+  LlullSearchController({required this.host, this.authToken, this.index = ''});
 
   Future<void> search({
     required String query,
@@ -47,7 +48,8 @@ class LlullSearchController {
         params['weight_impact'] = weightImpact.toString();
       }
 
-      final uri = Uri.parse('$host/v1/search').replace(queryParameters: params);
+      final path = index.isNotEmpty ? '/v1/$index/search' : '/v1/search';
+      final uri = Uri.parse('$host$path').replace(queryParameters: params);
       final headers = <String, String>{'Content-Type': 'application/json'};
       if (authToken != null) headers['Authorization'] = 'Bearer $authToken';
 

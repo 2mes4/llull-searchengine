@@ -7,7 +7,8 @@ Syncs changes from a MongoDB collection into the Llull search engine.
 | Parameter | Required | Description |
 |-----------|----------|-------------|
 | `connection` | Yes | MongoDB connection URI (e.g. `mongodb://localhost:27017`) |
-| `collection` | Yes | Collection name to watch |
+| `collection` | Yes | Collection name to watch (maps to Llull index) |
+| `index` | No | Llull index name (defaults to collection name) |
 | `options.database` | Yes | Database name |
 | `fields` | No | Fields to index (defaults to all string fields) |
 | `weight_field` | No | Numeric field to use as document weight (0.0–1.0) |
@@ -40,6 +41,7 @@ Where `config.json` contains:
   "type": "mongodb",
   "connection": "mongodb://localhost:27017",
   "collection": "documents",
+  "index": "products",
   "options": {
     "database": "myapp"
   },

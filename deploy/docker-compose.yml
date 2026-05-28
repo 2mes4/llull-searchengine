@@ -19,7 +19,7 @@ services:
     environment:
       - AUTH_TOKEN=llull-dev-token
       - SEED_FILE=/seed/seed.json
-      - DB_PATH=/data/llull.db
+      - DB_PATH=/data
     volumes:
       - seed-data:/seed
       - engine-data:/data

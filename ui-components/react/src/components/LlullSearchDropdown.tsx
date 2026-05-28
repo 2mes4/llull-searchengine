@@ -3,6 +3,7 @@ import { useLlullSearch } from '../hooks/useLlullSearch';
 
 interface LlullSearchDropdownProps {
   host: string;
+  index?: string;
   placeholder?: string;
   debounceMs?: number;
   minChars?: number;
@@ -13,6 +14,7 @@ interface LlullSearchDropdownProps {
 
 export function LlullSearchDropdown({
   host,
+  index,
   placeholder = 'Search...',
   debounceMs = 200,
   minChars = 2,
@@ -23,7 +25,7 @@ export function LlullSearchDropdown({
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout>>();
-  const { search, results, loading } = useLlullSearch({ host, authToken });
+  const { search, results, loading } = useLlullSearch({ host, index, authToken });
 
   const handleInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;

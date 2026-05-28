@@ -23,19 +23,23 @@ func main() {
 	authToken := flag.String("auth-token", os.Getenv("AUTH_TOKEN"), "Bearer token for index endpoint")
 	workers := flag.Int("workers", 4, "Number of worker goroutines")
 	bufferSize := flag.Int("buffer", 5000, "Worker queue buffer size")
-	seedFile := flag.String("seed-file", os.Getenv("SEED_FILE"), "JSON file to seed the index")
+	seedFile := flag.String("seed-file", os.Getenv("SEED_FILE"), "JSON file to seed the default index")
 	generateSeed := flag.String("generate-seed", "", "Generate seed file at path and exit")
 	seedDir := flag.String("seed-dir", os.Getenv("SEED_DIR"), "Directory with source text files")
 	seedCount := flag.Int("seed-count", 1000, "Max number of seed documents to generate")
-	dbPath := flag.String("db", os.Getenv("DB_PATH"), "Path to persistent database file")
-	dataSource := flag.String("data-source", os.Getenv("DATA_SOURCE"), "Name of the active data source (e.g. firestore, postgres)")
+	dbPath := flag.String("db", os.Getenv("DB_PATH"), "Directory for persistent database files")
+	defaultIndex := flag.String("default-index", os.Getenv("DEFAULT_INDEX"), "Default index name")
+	indexTTL := flag.Duration("index-ttl", 30*time.Minute, "Time before unloading idle indices")
 	flag.Parse()
 
 	if *authToken == "" {
 		*authToken = "llull-dev-token"
 	}
-	if *dataSource == "" {
-		*dataSource = "seed"
+	if *defaultIndex == "" {
+		*defaultIndex = "default"
+	}
+	if *dbPath == "" {
+		*dbPath = "/data"
 	}
 
 	if *generateSeed != "" {
@@ -58,37 +62,23 @@ func main() {
 		return
 	}
 
-	eng := engine.NewSearchEngine(*dataSource)
+	mgr := engine.NewIndexManager(*dbPath, *indexTTL, *defaultIndex)
+	eng := mgr.GetOrCreateIndex(*defaultIndex)
 	pool := worker.NewPool(eng, *bufferSize, *workers)
-	handlers := api.NewHandlers(eng, pool, *authToken)
+
+	handlers := api.NewHandlers(mgr, pool, *authToken)
 	router := api.NewRouter(handlers)
 
-	loaded := 0
-	if *dbPath != "" {
-		eng.SetPersistPath(*dbPath)
-		count, err := eng.LoadPersistent(*dbPath)
-		if err == nil && count > 0 {
-			loaded = count
-			log.Printf("Loaded %d documents from persistent database", loaded)
-		}
-	}
-
-	if loaded == 0 && *seedFile != "" {
+	if *seedFile != "" {
 		loadSeedData(pool, *seedFile)
 	}
 
 	if *dbPath != "" {
 		go func() {
-			ticker := time.NewTicker(5 * time.Second)
+			ticker := time.NewTicker(10 * time.Second)
 			defer ticker.Stop()
 			for range ticker.C {
-				if eng.Dirty() {
-					if err := eng.SavePersistent(); err != nil {
-						log.Printf("Persist error: %v", err)
-					} else {
-						eng.MarkClean()
-					}
-				}
+				mgr.SaveAll()
 			}
 		}()
 	}
@@ -102,7 +92,7 @@ func main() {
 	}
 
 	go func() {
-		log.Printf("Llull search engine running on :%d", *port)
+		log.Printf("Llull search engine running on :%d (default index: %q)", *port, *defaultIndex)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Server error: %v", err)
 		}
@@ -113,14 +103,12 @@ func main() {
 	<-quit
 
 	log.Println("Shutting down server...")
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatalf("Server forced to shutdown: %v", err)
-	}
-
+	mgr.Stop()
 	pool.Stop()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	srv.Shutdown(ctx)
 	log.Println("Server stopped")
 }
 

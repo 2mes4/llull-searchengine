@@ -82,6 +82,17 @@ params:
     example: "popularity_score"
     required: false
 
+  - param: INDEX_NAME
+    label: Index name
+    description: >-
+      Name of the Llull index to sync this collection to.
+      Leave empty to use the collection name as the index name.
+      With multi-index, each collection maps to a separate index.
+      Example: "products"
+    type: string
+    example: "products"
+    required: false
+
 resources:
   - name: syncToMuntaner
     type: firebaseextensions.v1beta.v2function

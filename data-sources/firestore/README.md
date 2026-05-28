@@ -36,10 +36,11 @@ firebase deploy --only functions --project=your-project-id
 |-----------|----------|-------------|
 | `COLLECTION_PATH` | Yes | Firestore collection path (e.g. `users`) |
 | `DATABASE_REGION` | Yes | Firestore database region (e.g. `nam5`) |
-| `ENDPOINT_URL` | Yes | Llull engine URL (e.g. `https://search.example.com/v1/index`) |
+| `ENDPOINT_URL` | Yes | Llull engine URL (e.g. `https://search.example.com/v1/{index}/index`) |
 | `AUTH_TOKEN` | Yes | Shared Bearer token (stored as Cloud Secret) |
 | `INDEXABLE_FIELDS` | Yes | Comma-separated fields to index (e.g. `title,content,author`) |
 | `WEIGHT_FIELD` | No | Numeric field for business weight ranking |
+| `INDEX_NAME` | No | Target Llull index name (defaults to collection name) |
 
 ## How It Works
 

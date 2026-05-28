@@ -7,7 +7,8 @@ Syncs changes from a PostgreSQL table into the Llull search engine.
 | Parameter | Required | Description |
 |-----------|----------|-------------|
 | `connection` | Yes | PostgreSQL connection string (e.g. `postgres://user:pass@host:5432/db?sslmode=disable`) |
-| `collection` | Yes | Table name to watch |
+| `collection` | Yes | Table name to watch (maps to Llull index name) |
+| `index` | No | Llull index name (defaults to collection name) |
 | `fields` | No | Columns to index (defaults to all text columns) |
 | `weight_field` | No | Numeric column to use as document weight (0.0–1.0) |
 | `poll_interval` | No | How often to check for changes (default: `5s`) |
@@ -39,6 +40,7 @@ Where `config.json` contains:
   "type": "postgres",
   "connection": "postgres://user:pass@localhost:5432/mydb",
   "collection": "documents",
+  "index": "products",
   "fields": ["title", "content"],
   "weight_field": "weight",
   "poll_interval": "10s"

@@ -5,6 +5,7 @@ import 'types.dart';
 class LlullSearchResults extends StatefulWidget {
   final String host;
   final String? authToken;
+  final String index;
   final int hitsPerPage;
   final Widget Function(LlullSearchResult result, String query)? cardBuilder;
 
@@ -12,6 +13,7 @@ class LlullSearchResults extends StatefulWidget {
     super.key,
     required this.host,
     this.authToken,
+    this.index = '',
     this.hitsPerPage = 10,
     this.cardBuilder,
   });
@@ -22,12 +24,13 @@ class LlullSearchResults extends StatefulWidget {
 
 class _LlullSearchResultsState extends State<LlullSearchResults> {
   final _queryController = TextEditingController();
-  final _searchController = LlullSearchController(host: '');
+  late final LlullSearchController _searchController;
   int _page = 1;
 
   @override
   void initState() {
     super.initState();
+    _searchController = LlullSearchController(host: widget.host, authToken: widget.authToken, index: widget.index);
     _queryController.addListener(() {
       _page = 1;
       _doSearch();

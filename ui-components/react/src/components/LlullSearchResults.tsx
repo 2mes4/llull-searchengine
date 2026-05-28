@@ -4,6 +4,7 @@ import type { LlullSearchResult } from '../types';
 
 interface LlullSearchResultsProps {
   host: string;
+  index?: string;
   authToken?: string;
   renderCard?: (result: LlullSearchResult, query: string) => React.ReactNode;
   hitsPerPage?: number;
@@ -11,13 +12,14 @@ interface LlullSearchResultsProps {
 
 export function LlullSearchResults({
   host,
+  index,
   authToken,
   renderCard,
   hitsPerPage = 10,
 }: LlullSearchResultsProps) {
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
-  const { search, results, totalHits, loading, error } = useLlullSearch({ host, authToken });
+  const { search, results, totalHits, loading, error } = useLlullSearch({ host, index, authToken });
 
   const handleInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(e.target.value);
