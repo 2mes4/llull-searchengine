@@ -9,10 +9,10 @@
   "keywords": ["llull", "llull-searchengine", "search", "search-engine", "react", "autocomplete", "algolia"],
   "repository": {
     "type": "git",
-    "url": "https://github.com/2mes4/llull.git",
+    "url": "https://github.com/2mes4/llull-searchengine.git",
     "directory": "ui-components/react"
   },
-  "homepage": "https://github.com/2mes4/llull",
+  "homepage": "https://github.com/2mes4/llull-searchengine",
   "license": "SEE LICENSE IN LICENSE",
   "scripts": {
     "build": "tsup src/index.tsx --dts --format esm,cjs --external react",
