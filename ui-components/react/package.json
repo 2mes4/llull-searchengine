@@ -1,5 +1,5 @@
 {
-  "name": "@llull/search-components",
+  "name": "llull-search-components",
   "version": "0.1.0",
   "description": "Llull search engine UI components for React. Search-as-you-type dropdown, headless hook, and pre-built results cards.",
   "main": "dist/index.js",

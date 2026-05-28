@@ -30,11 +30,7 @@ class LlullSearchDropdown extends StatefulWidget {
 
 class _LlullSearchDropdownState extends State<LlullSearchDropdown> {
   final controller = TextEditingController();
-  late final _searchController = LlullSearchController(
-    host: '',
-    authToken: null,
-    index: widget.index,
-  );
+  late final LlullSearchController _searchController;
   final _focusNode = FocusNode();
   bool _open = false;
   Timer? _timer;
@@ -42,6 +38,11 @@ class _LlullSearchDropdownState extends State<LlullSearchDropdown> {
   @override
   void initState() {
     super.initState();
+    _searchController = LlullSearchController(
+      host: widget.host,
+      authToken: widget.authToken,
+      index: widget.index,
+    );
     controller.addListener(_onChanged);
     _focusNode.addListener(() {
       if (!_focusNode.hasFocus) setState(() => _open = false);
