@@ -5,8 +5,8 @@ We welcome contributions! Here's how to get started.
 ## Development Setup
 
 ```bash
-git clone git@github.com:2mes4/llull.git
-cd llull
+git clone git@github.com:2mes4/llull-searchengine.git
+cd llull-searchengine
 go test ./... -v -race
 ```
 
@@ -14,10 +14,10 @@ go test ./... -v -race
 
 ```
 llull/
-├── cmd/server/main.go              Entry point
+├── cmd/server/main.go              Entry point (IndexManager, BoltDB, multi-index)
 ├── internal/
-│   ├── engine/                     Core search (trie, ranking, fuzzy)
-│   ├── api/                        HTTP handlers (chi router)
+│   ├── engine/                     Core search (IndexManager, trie, ranking, fuzzy, persist)
+│   ├── api/                        HTTP handlers (chi router, multi-index routes)
 │   ├── worker/                     Worker pool (buffered channel)
 │   ├── datasource/                 Data source interface + connectors
 │   └── seed/                       Seed data generator
@@ -35,8 +35,8 @@ llull/
 ## Code Style
 
 - **Go**: No comments unless requested. Use `fmt.Errorf` with `%w` for errors. `sync.RWMutex` for trie concurrency
-- **React**: Functional components with TypeScript. Hooks, no class components. Export types
-- **Flutter**: Widgets with `const` constructors. `StatelessWidget` > `StatefulWidget` when possible
+- **React**: Functional components with TypeScript. Hooks, no class components. Export types. Accept `index` prop for multi-index
+- **Flutter**: Widgets with `const` constructors. `StatelessWidget` > `StatefulWidget` when possible. Accept `index` parameter
 - **All**: English language, no emojis unless requested
 
 ## Testing
@@ -56,9 +56,10 @@ cd ui-components/flutter && flutter test
 
 1. Implement `internal/datasource/datasource.go` interface
 2. Add connector in `internal/datasource/<name>/`
-3. Document in `data-sources/<name>/README.md`
-4. Include README with configuration table
-5. Add tests
+3. Include `Index` field in `Config` to specify target Llull index
+4. Document in `data-sources/<name>/README.md`
+5. Include README with configuration table
+6. Add tests
 
 See `skills/llull-searchengine-datasources-creator/SKILL.md` for the full guide.
 
@@ -68,7 +69,8 @@ See `skills/llull-searchengine-datasources-creator/SKILL.md` for the full guide.
 2. Flutter widgets go in `ui-components/flutter/lib/`
 3. Export from `src/index.tsx` or `lib/main.dart`
 4. Include TypeScript/TypeDefs for React
-5. Follow existing patterns
+5. Accept optional `index` prop/parameter for multi-index support
+6. Follow existing patterns
 
 ## Pull Request Process
 

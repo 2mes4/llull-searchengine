@@ -26,11 +26,14 @@ docker compose -f deploy/docker-compose.yml up --build
 ## Project Structure
 
 ```
-cmd/server/main.go              Entry point
-internal/engine/                Core search engine (trie, search, ranking, fuzzy)
-internal/api/                   HTTP handlers (chi router)
+cmd/server/main.go              Entry point (IndexManager, BoltDB, multi-index)
+internal/engine/                Core (IndexManager, trie, search, ranking, fuzzy, persist)
+internal/api/                   HTTP handlers (chi router, multi-index routes)
 internal/worker/                Buffered worker pool
 internal/datasource/            Data source abstraction layer + connectors
+internal/datasource/postgres/   PostgreSQL connector
+internal/datasource/mysql/      MySQL connector
+internal/datasource/mongodb/    MongoDB connector
 internal/seed/                  Seed data generator from text files
 data-sources/firestore/         Firebase Extension (push model)
 data-sources/postgres/          PostgreSQL connector docs + config
@@ -65,14 +68,15 @@ deploy/docs/                    Linux installation guide
 
 ## Key Design Decisions
 
-- Trie (not Radix Tree) for simplicity — can be upgraded later
-- Levenshtein automaton with DFS pruning for fuzzy search
-- Early truncation at 1000 results before sorting for pagination performance
-- Worker pool with buffered channel for async indexing
-- Elastic License 2.0 style — source available, no cloud resale
-- Search results include document fields, weight, and score for UI rendering
-- Data sources implement the `datasource.Connector` interface for extensibility
-- All data source connectors follow the same internal structure and configuration format
+- **Multi-index**: `IndexManager` manages named `SearchEngine` instances. Auto-unload idle indices after configurable TTL
+- **Trie** (not Radix Tree) for simplicity — can be upgraded later
+- **Levenshtein automaton** with DFS pruning for fuzzy search
+- **Early truncation** at 1000 results before sorting for pagination performance
+- **Worker pool** with buffered channel for async indexing
+- **BoltDB persistence** — index data survives restarts via embedded key-value store
+- **Elastic License 2.0** style — source available, no cloud resale
+- **Search results** include document fields, weight, and score for UI rendering
+- **Data sources** implement the `datasource.Connector` interface for extensibility
 
 ## Data Source Development
 
@@ -80,7 +84,7 @@ See `skills/llull-searchengine-datasources-creator/SKILL.md` for the guide on bu
 
 Every connector must:
 1. Implement `datasource.Connector` interface
-2. Accept `datasource.Config` for connection parameters
+2. Accept `datasource.Config` for connection parameters (including `Index` field)
 3. Emit `datasource.Event` objects through the callback
 4. Handle context cancellation for graceful shutdown
 5. Include a README.md in its data-sources/ directory

@@ -15,8 +15,8 @@ Complete guide for deploying Llull on a Linux VPS or bare-metal server.
 On a machine with Go 1.24+ installed:
 
 ```bash
-git clone git@github.com:2mes4/llull.git
-cd llull
+git clone git@github.com:2mes4/llull-searchengine.git
+cd llull-searchengine
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o llull ./cmd/server
 ```
 
@@ -89,9 +89,9 @@ curl http://localhost:8080/v1/health
 ## Option B: Docker Installation
 
 ```bash
-git clone git@github.com:2mes4/llull.git
-cd llull
-docker compose up -d
+git clone git@github.com:2mes4/llull-searchengine.git
+cd llull-searchengine
+docker compose -f deploy/docker-compose.yml up -d
 ```
 
 Customize for production:
