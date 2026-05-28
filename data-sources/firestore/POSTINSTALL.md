@@ -1,6 +1,6 @@
-# Muntaner Search Sync - Installed
+# Llull Search Sync - Installed
 
-Your Firestore documents are now being synced to your Muntaner search engine.
+Your Firestore documents are now being synced to your Llull search engine.
 
 ## Usage
 

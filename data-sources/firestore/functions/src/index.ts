@@ -22,7 +22,7 @@ function getIndexUrl(): string {
   return ENDPOINT_URL.replace(/\/v1\/[^/]+\/index$/, `/v1/${index}/index`);
 }
 
-export const syncToMuntaner = onDocumentWritten(
+export const syncToLlull = onDocumentWritten(
   {
     document: `${process.env.COLLECTION_PATH || "documents"}/{documentId}`,
     region: process.env.DATABASE_REGION || "nam5",

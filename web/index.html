@@ -37,6 +37,11 @@
               <label>
                 <input type="checkbox" id="fuzzy-search" checked> Tolerància a errors
               </label>
+              <label>
+                Índex: <select id="index-select">
+                  <option value="default">default</option>
+                </select>
+              </label>
             </div>
           </div>
         </div>
@@ -56,6 +61,10 @@
           <div class="stat-card">
             <div class="stat-label">Cua</div>
             <div class="stat-value" id="stat-queue">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Índex</div>
+            <div class="stat-value" id="stat-index">default</div>
           </div>
         </div>
       </div>
@@ -125,6 +134,22 @@
       <p>Prova amb un altre terme de cerca</p>
     </div>
   </main>
+
+  <div id="modal-overlay" class="modal-overlay" onclick="closeModal()">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 id="modal-title"></h3>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-meta">
+        <span id="modal-source"></span>
+        <span id="modal-id"></span>
+        <span>pes: <strong id="modal-weight"></strong></span>
+        <span>rellevància: <strong id="modal-score"></strong></span>
+      </div>
+      <div class="modal-body" id="modal-content"></div>
+    </div>
+  </div>
 
   <footer>
     <a href="https://github.com/2mes4/llull">Llull Search Engine</a> &middot; Un cercador de codi obert i ultra lleuger.

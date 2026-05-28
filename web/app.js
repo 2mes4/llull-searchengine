@@ -13,11 +13,34 @@
   var weightImpactEl = document.getElementById('weight-impact');
   var weightValueEl = document.getElementById('weight-value');
   var fuzzyEl = document.getElementById('fuzzy-search');
+  var indexSelect = document.getElementById('index-select');
 
   var currentQuery = '';
   var currentPage = 1;
   var debounceTimer = null;
   var abortController = null;
+  var currentHits = [];
+
+  function openModal(hit) {
+    var f = hit.fields || {};
+    var title = f.title || hit.id;
+    var content = f.content || '';
+    var source = f.source || '';
+    var weight = hit.weight != null ? hit.weight : (f.weight || 0);
+    var weightPct = Math.round(weight * 100);
+
+    document.getElementById('modal-title').innerHTML = highlight(title, currentQuery);
+    document.getElementById('modal-source').textContent = source;
+    document.getElementById('modal-id').textContent = hit.id;
+    document.getElementById('modal-weight').textContent = weightPct + '%';
+    document.getElementById('modal-score').textContent = Math.round(hit.score * 1000) / 1000;
+    document.getElementById('modal-content').innerHTML = highlight(content, currentQuery);
+    document.getElementById('modal-overlay').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('open');
+  }
 
   function init() {
     searchInput.addEventListener('input', function () {
@@ -37,9 +60,29 @@
     });
     weightImpactEl.addEventListener('change', function () { doSearch(1); });
     fuzzyEl.addEventListener('change', function () { doSearch(1); });
+    indexSelect.addEventListener('change', function () { doSearch(1); });
 
     loadStats();
+    loadIndices();
     setInterval(loadStats, 3000);
+  }
+
+  function loadIndices() {
+    fetch(API_BASE + '/indices')
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d.indices) return;
+        var sel = indexSelect;
+        sel.innerHTML = '';
+        var names = Object.keys(d.indices);
+        names.forEach(function (name) {
+          var opt = document.createElement('option');
+          opt.value = name;
+          opt.textContent = name + ' (' + d.indices[name].docs + ')';
+          sel.appendChild(opt);
+        });
+      })
+      .catch(function () {});
   }
 
   function loadStats() {
@@ -50,6 +93,7 @@
         document.getElementById('stat-source').textContent = d.data_source || '—';
         document.getElementById('stat-memory').textContent = (d.memory_mb || '?') + ' MB';
         document.getElementById('stat-queue').textContent = d.queue_length || '0';
+        document.getElementById('stat-index').textContent = indexSelect.value || 'default';
       })
       .catch(function () {});
   }
@@ -82,7 +126,9 @@
       params.set('weight_impact', (parseInt(weightImpactEl.value) / 100).toString());
     }
 
-    fetch(API_BASE + '/search?' + params.toString(), { signal: abortController.signal })
+    var idx = indexSelect.value;
+    var searchPath = idx && idx !== 'default' ? '/v1/' + idx + '/search' : '/v1/search';
+    fetch(API_BASE + searchPath + '?' + params.toString(), { signal: abortController.signal })
       .then(function (r) { return r.json(); })
       .then(function (data) { render(data); })
       .catch(function (err) {
@@ -103,7 +149,7 @@
       for (var t = 0; t < tokens.length; t++) {
         var tok = tokens[t];
         if (lower.substr(i, tok.length) === tok) {
-          parts.push('<em>' + esc(text.substr(i, tok.length)) + '</em>');
+          parts.push('<strong>' + esc(text.substr(i, tok.length)) + '</strong>');
           i += tok.length;
           found = true;
           break;
@@ -143,7 +189,8 @@
       (data.page > 1 ? ' - Pàgina ' + data.page : '');
 
     var html = '';
-    data.hits.forEach(function (hit) {
+    currentHits = data.hits;
+    data.hits.forEach(function (hit, idx) {
       var f = hit.fields || {};
       var title = f.title || hit.id;
       var content = f.content || '';
@@ -158,12 +205,12 @@
       var weightPct = Math.round(weight * 100);
       var scoreStr = Math.round(score * 1000) / 1000;
 
-      html += '<div class="result">';
+      html += '<div class="result" onclick="window.__openModal(' + idx + ')" style="cursor:pointer;">';
       html += '<div class="url-line">';
       html += '<span class="source">' + esc(source) + '</span>';
       html += '<span class="doc-id">' + esc(hit.id) + '</span>';
       html += '</div>';
-      html += '<h3><a onclick="return false">' + highlightedTitle + '</a></h3>';
+      html += '<h3><a onclick="window.__openModal(' + idx + ');return false">' + highlightedTitle + '</a></h3>';
       html += '<div class="snippet">' + highlighted + '</div>';
       html += '<div class="meta-row">';
       html += '<span>pes: ' + weightPct + '% <span class="weight-bar"><span class="weight-fill" style="width:' + weightPct + '%"></span></span></span>';
@@ -197,6 +244,7 @@
   window.__prev = function () { if (currentPage > 1) doSearch(currentPage - 1); };
   window.__next = function () { doSearch(currentPage + 1); };
   window.__triggerSearch = function () { doSearch(1); };
+  window.__openModal = function (idx) { if (currentHits[idx]) openModal(currentHits[idx]); };
   window.__copy = function (btn) {
     var text = btn.parentElement.textContent.replace(/^Copia/, '').trim();
     navigator.clipboard.writeText(text).then(function () {

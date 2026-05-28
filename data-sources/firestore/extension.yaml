@@ -1,10 +1,10 @@
-name: muntaner-search-sync
+name: llull-search-sync
 version: 0.1.0
 specVersion: v1beta
 
-displayName: Muntaner Search Sync
+displayName: Llull Search Sync
 description: >-
-  Syncs Firestore document changes to a Muntaner search engine instance.
+  Syncs Firestore document changes to a Llull search engine instance.
   Keeps your search index in sync automatically.
 
 license: Apache-2.0
@@ -14,7 +14,7 @@ sourceUrl: https://github.com/eric/llull
 releaseNotesUrl: https://github.com/eric/llull/blob/main/firebase-extension/CHANGELOG.md
 
 author:
-  authorName: Muntaner Contributors
+  authorName: Llull Contributors
   url: https://github.com/eric/llull
 
 roles:
@@ -47,9 +47,9 @@ params:
     required: true
 
   - param: ENDPOINT_URL
-    label: Muntaner Engine URL
+    label: Llull Engine URL
     description: >-
-      The full URL of your Muntaner search engine instance's index endpoint.
+      The full URL of your Llull search engine instance's index endpoint.
       Example: https://search.example.com/v1/index
     type: string
     example: https://search.example.com/v1/index
@@ -58,7 +58,7 @@ params:
   - param: AUTH_TOKEN
     label: Authentication Token
     description: >-
-      Bearer token for authenticating with the Muntaner engine.
+      Bearer token for authenticating with the Llull engine.
       Must match the AUTH_TOKEN configured on your engine instance.
     type: secret
     required: true
@@ -94,11 +94,11 @@ params:
     required: false
 
 resources:
-  - name: syncToMuntaner
+  - name: syncToLlull
     type: firebaseextensions.v1beta.v2function
     description: >-
       Listens for Firestore document writes in the configured collection
-      and syncs them to the Muntaner search engine.
+      and syncs them to the Llull search engine.
     properties:
       sourceDirectory: functions
       buildConfig:
@@ -117,7 +117,7 @@ resources:
             operator: match-path-pattern
 
 events:
-  - type: muntaner.search-sync.v1.syncComplete
+  - type: llull.search-sync.v1.syncComplete
     description: Occurs when a document has been successfully synced.
-  - type: muntaner.search-sync.v1.syncError
+  - type: llull.search-sync.v1.syncError
     description: Occurs when syncing a document fails.

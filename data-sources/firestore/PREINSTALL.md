@@ -1,17 +1,17 @@
-# Muntaner Search Sync
+# Llull Search Sync
 
 ## Before installing this extension
 
-You need a Muntaner search engine instance running and accessible via HTTP. You can deploy one on any VPS or cloud provider.
+You need a Llull search engine instance running and accessible via HTTP. You can deploy one on any VPS or cloud provider.
 
 **Requirements:**
-- A running Muntaner search engine instance
+- A running Llull search engine instance
 - The engine's URL (e.g., `https://search.example.com`)
 - A shared authentication token
 
 **What this extension does:**
 - Watches a Firestore collection for document changes (create, update, delete)
-- Sends only the fields you specify to the Muntaner engine
+- Sends only the fields you specify to the Llull engine
 - Automatically removes documents from the index when deleted from Firestore
 - Supports weighted ranking via a configurable numeric field
 
