@@ -1,0 +1,33 @@
+{
+  "name": "@llull/search-components",
+  "version": "0.1.0",
+  "description": "Llull search engine UI components for React. Search-as-you-type dropdown, headless hook, and pre-built results cards.",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "keywords": ["llull", "llull-searchengine", "search", "search-engine", "react", "autocomplete", "algolia"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/2mes4/llull.git",
+    "directory": "ui-components/react"
+  },
+  "homepage": "https://github.com/2mes4/llull",
+  "license": "SEE LICENSE IN LICENSE",
+  "scripts": {
+    "build": "tsup src/index.tsx --dts --format esm,cjs --external react",
+    "dev": "tsup src/index.tsx --dts --format esm,cjs --external react --watch",
+    "test": "vitest run",
+    "prepublishOnly": "npm run build"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.0",
+    "react": "^18.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.0.0"
+  }
+}

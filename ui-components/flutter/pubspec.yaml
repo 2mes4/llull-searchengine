@@ -1,0 +1,22 @@
+name: llull_search_components
+description: "Llull search engine UI widgets for Flutter. Search-as-you-type dropdown, headless controller, and pre-built search results."
+version: 0.1.0
+homepage: https://github.com/2mes4/llull
+repository: https://github.com/2mes4/llull.git
+license: SEE LICENSE IN LICENSE
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+  flutter: ">=3.10.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.2.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:

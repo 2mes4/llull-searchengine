@@ -1,0 +1,112 @@
+name: muntaner-search-sync
+version: 0.1.0
+specVersion: v1beta
+
+displayName: Muntaner Search Sync
+description: >-
+  Syncs Firestore document changes to a Muntaner search engine instance.
+  Keeps your search index in sync automatically.
+
+license: Apache-2.0
+billingRequired: true
+
+sourceUrl: https://github.com/eric/llull
+releaseNotesUrl: https://github.com/eric/llull/blob/main/firebase-extension/CHANGELOG.md
+
+author:
+  authorName: Muntaner Contributors
+  url: https://github.com/eric/llull
+
+roles:
+  - role: datastore.user
+    reason: Allows the extension to read Firestore documents for syncing.
+
+params:
+  - param: COLLECTION_PATH
+    label: Collection path
+    description: >-
+      Path to the Firestore collection to watch for changes.
+      Example: "users" or "posts".
+    type: string
+    default: documents
+    validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
+    validationErrorMessage: Must be a valid Firestore collection path
+    required: true
+
+  - param: DATABASE_REGION
+    label: Firestore Location
+    description: The region where your Firestore database is located.
+    type: select
+    options:
+      - label: nam5 (us-central)
+        value: nam5
+      - label: eur3 (europe-west)
+        value: eur3
+      - label: asia-northeast1
+        value: asia-northeast1
+    required: true
+
+  - param: ENDPOINT_URL
+    label: Muntaner Engine URL
+    description: >-
+      The full URL of your Muntaner search engine instance's index endpoint.
+      Example: https://search.example.com/v1/index
+    type: string
+    example: https://search.example.com/v1/index
+    required: true
+
+  - param: AUTH_TOKEN
+    label: Authentication Token
+    description: >-
+      Bearer token for authenticating with the Muntaner engine.
+      Must match the AUTH_TOKEN configured on your engine instance.
+    type: secret
+    required: true
+
+  - param: INDEXABLE_FIELDS
+    label: Indexable fields
+    description: >-
+      Comma-separated list of field names to include in the index payload.
+      Only these fields will be sent to the search engine.
+      Example: "title,content,author,tags"
+    type: string
+    example: "title,content,author,tags"
+    required: true
+
+  - param: WEIGHT_FIELD
+    label: Weight field
+    description: >-
+      Name of a numeric field to use as the document's business weight
+      for ranking (0.0 to 1.0). Leave empty to disable weighted ranking.
+    type: string
+    example: "popularity_score"
+    required: false
+
+resources:
+  - name: syncToMuntaner
+    type: firebaseextensions.v1beta.v2function
+    description: >-
+      Listens for Firestore document writes in the configured collection
+      and syncs them to the Muntaner search engine.
+    properties:
+      sourceDirectory: functions
+      buildConfig:
+        runtime: nodejs22
+      serviceConfig:
+        timeoutSeconds: 60
+        availableMemory: 256Mi
+      eventTrigger:
+        eventType: google.cloud.firestore.document.v1.written
+        triggerRegion: ${DATABASE_REGION}
+        eventFilters:
+          - attribute: database
+            value: "(default)"
+          - attribute: document
+            value: ${COLLECTION_PATH}/{documentId}
+            operator: match-path-pattern
+
+events:
+  - type: muntaner.search-sync.v1.syncComplete
+    description: Occurs when a document has been successfully synced.
+  - type: muntaner.search-sync.v1.syncError
+    description: Occurs when syncing a document fails.

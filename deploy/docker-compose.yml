@@ -1,0 +1,48 @@
+services:
+  seeder:
+    build:
+      context: ..
+      dockerfile: deploy/docker/Dockerfile.server
+    image: llull-searchengine:latest
+    command: ["-generate-seed", "/seed/seed.json", "-seed-count", "1000"]
+    volumes:
+      - seed-data:/seed
+    restart: "no"
+
+  engine:
+    build:
+      context: ..
+      dockerfile: deploy/docker/Dockerfile.server
+    image: llull-searchengine:latest
+    ports:
+      - "8180:8080"
+    environment:
+      - AUTH_TOKEN=llull-dev-token
+      - SEED_FILE=/seed/seed.json
+      - DB_PATH=/data/llull.db
+    volumes:
+      - seed-data:/seed
+      - engine-data:/data
+    depends_on:
+      seeder:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/v1/health"]
+      interval: 3s
+      timeout: 3s
+      retries: 15
+      start_period: 3s
+
+  ui:
+    build:
+      context: ..
+      dockerfile: deploy/docker/Dockerfile.ui
+    ports:
+      - "4320:3000"
+    depends_on:
+      engine:
+        condition: service_healthy
+
+volumes:
+  seed-data:
+  engine-data:

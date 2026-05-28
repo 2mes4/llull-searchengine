@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: llull-config
+  namespace: llull
+data:
+  AUTH_TOKEN: "change-me-in-production"

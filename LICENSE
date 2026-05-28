@@ -1,0 +1,96 @@
+Muntaner Search Engine License
+
+Copyright (c) 2024 Muntaner Contributors
+
+This license governs use of the accompanying software. If you use the
+software, you accept this license. If you do not accept the license, do not
+use the software.
+
+1. Definitions
+
+"Software" means the Muntaner search engine software and any updates or
+additions made by the licensor.
+
+"Licensor" means the copyright holder or holder of the intellectual property
+rights to the Software.
+
+"Licensee" means any person or entity using the Software.
+
+"Derivative Works" means any modification, enhancement, or extension of the
+Software.
+
+2. License Grant
+
+Subject to the terms and conditions of this license, the Licensor hereby
+grants to the Licensee a non-exclusive, royalty-free, worldwide,
+non-transferable, non-sublicensable license during the term of this license
+to:
+
+(a) use the Software;
+(b) prepare Derivative Works of the Software;
+(c) reproduce copies of the Software;
+(d) distribute the Software, including in source code or object code form; and
+(e) incorporate the Software into products or services.
+
+3. Conditions
+
+The Licensee must:
+
+(a) cause any Derivative Works to carry prominent notices stating that the
+    Licensee modified the Software;
+
+(b) on each Software copy distributed, reproduce and not remove or alter all
+    copyright or other proprietary notices contained in the Software;
+
+(c) include a copy of this license with each copy of the Software distributed; and
+
+(d) prominently display the following notice with each copy of the Software:
+
+    "This software is made available under the Muntaner Search Engine License.
+     By using this software, you agree to the terms and conditions of this license."
+
+4. Limitations
+
+(a) The Licensee may not provide the Software or Derivative Works to third
+    parties as a hosted or managed service, where the service provides users
+    with access to any substantial set of the features or functionality of
+    the Software.
+
+(b) The Licensee may not use the Software or Derivative Works to offer a
+    search-as-a-service, platform-as-a-service, infrastructure-as-a-service,
+    or any similar online service that competes with the Software's primary
+    purpose as a search engine.
+
+(c) The Licensee may not alter, remove, or obscure any licensing, copyright,
+    or other notices of the Licensor in the Software.
+
+5. Retained Rights
+
+The Licensor retains all intellectual property rights to the Software. This
+license does not transfer any ownership rights.
+
+6. Disclaimer of Warranty
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+LICENSOR OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+7. Termination
+
+This license and the rights granted hereunder will terminate automatically
+upon any breach by the Licensee of the terms of this license. Upon termination,
+the Licensee shall destroy all copies of the Software in their possession.
+
+8. Survival
+
+Sections 4, 5, 6, and 7 shall survive termination of this license.
+
+9. Miscellaneous
+
+This license represents the complete agreement concerning the subject matter
+hereof. If any provision of this license is held to be unenforceable, such
+provision shall be reformed only to the extent necessary to make it enforceable.

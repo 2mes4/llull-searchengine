@@ -1,0 +1,8 @@
+.DS_Store
+seed.json
+.env
+*.swp
+*.swo
+dist/
+node_modules/
+.pub-cache/
