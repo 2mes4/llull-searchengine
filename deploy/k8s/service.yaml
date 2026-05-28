@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: llull
+  name: llull-searchengine
   namespace: llull
 spec:
   selector:
-    app: llull
+    app: llull-searchengine
   ports:
     - port: 8080
       targetPort: http

@@ -41,6 +41,7 @@ func (h *Handlers) Health(w http.ResponseWriter, r *http.Request) {
 	runtime.ReadMemStats(&m)
 
 	indices := h.manager.ListIndices()
+	totalDocs := int64(0)
 	indexInfo := make(map[string]map[string]interface{})
 	for _, name := range indices {
 		count, loaded := h.manager.IndexInfo(name)
@@ -48,17 +49,21 @@ func (h *Handlers) Health(w http.ResponseWriter, r *http.Request) {
 			"docs":   count,
 			"loaded": loaded,
 		}
+		totalDocs += count
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"status":       "ok",
-		"default_index": h.manager.DefaultIndex(),
-		"indices":      indexInfo,
-		"queue_length": h.pool.QueueLen(),
-		"goroutines":   runtime.NumGoroutine(),
-		"memory_mb":    fmt.Sprintf("%.1f", float64(m.Alloc)/1024/1024),
-		"uptime_sec":   int(h.startedAt.Unix()),
+		"status":         "ok",
+		"docs_indexed":   totalDocs,
+		"data_source":    "seed",
+		"default_index":  h.manager.DefaultIndex(),
+		"indices":        indexInfo,
+		"queue_length":   h.pool.QueueLen(),
+		"goroutines":     runtime.NumGoroutine(),
+		"memory_mb":      fmt.Sprintf("%.1f", float64(m.Alloc)/1024/1024),
+		"total_memory_mb": fmt.Sprintf("%.1f", float64(m.Sys)/1024/1024),
+		"uptime_sec":     int(h.startedAt.Unix()),
 	})
 }
 

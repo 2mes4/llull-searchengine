@@ -1,3 +1,5 @@
+name: llull-searchengine
+
 services:
   seeder:
     build:

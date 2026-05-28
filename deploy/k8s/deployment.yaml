@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: llull
+  name: llull-searchengine
   namespace: llull
   labels:
-    app: llull
+    app: llull-searchengine
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: llull
+      app: llull-searchengine
   template:
     metadata:
       labels:
-        app: llull
+        app: llull-searchengine
     spec:
       containers:
         - name: llull
-          image: llull:latest
+          image: llull-searchengine:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080

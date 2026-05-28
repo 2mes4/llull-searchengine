@@ -91,9 +91,9 @@
       .then(function (d) {
         document.getElementById('stat-docs').textContent = d.docs_indexed || '0';
         document.getElementById('stat-source').textContent = d.data_source || '—';
-        document.getElementById('stat-memory').textContent = (d.memory_mb || '?') + ' MB';
+        document.getElementById('stat-memory').textContent = (d.total_memory_mb || d.memory_mb || '?') + ' MB';
         document.getElementById('stat-queue').textContent = d.queue_length || '0';
-        document.getElementById('stat-index').textContent = indexSelect.value || 'default';
+        document.getElementById('stat-index').textContent = indexSelect.value || d.default_index || 'default';
       })
       .catch(function () {});
   }
@@ -113,7 +113,7 @@
     heroEl.style.display = 'none';
     if (abortController) abortController.abort();
     abortController = new AbortController();
-    resultsEl.innerHTML = '<div class="loading">Cercant...</div>';
+    resultsEl.innerHTML = '<div class="loading">Searching...</div>';
     statsEl.textContent = '';
     currentQuery = q;
 
@@ -127,13 +127,13 @@
     }
 
     var idx = indexSelect.value;
-    var searchPath = idx && idx !== 'default' ? '/v1/' + idx + '/search' : '/v1/search';
-    fetch(API_BASE + searchPath + '?' + params.toString(), { signal: abortController.signal })
+    var searchSuffix = idx && idx !== 'default' ? '/' + idx + '/search' : '/search';
+    fetch(API_BASE + searchSuffix + '?' + params.toString(), { signal: abortController.signal })
       .then(function (r) { return r.json(); })
       .then(function (data) { render(data); })
       .catch(function (err) {
         if (err.name !== 'AbortError') {
-          resultsEl.innerHTML = '<div class="empty-state"><h3>Error de connexió</h3></div>';
+          resultsEl.innerHTML = '<div class="empty-state"><h3>Connection error</h3></div>';
         }
       });
   }
@@ -184,9 +184,9 @@
       return;
     }
 
-    statsEl.textContent = 'Uns ' + data.total_hits + ' resultats' +
+    statsEl.textContent = 'About ' + data.total_hits + ' results' +
       ' (' + data.query_time + ' \u00b5s)' +
-      (data.page > 1 ? ' - Pàgina ' + data.page : '');
+      (data.page > 1 ? ' - Page ' + data.page : '');
 
     var html = '';
     currentHits = data.hits;
@@ -213,8 +213,8 @@
       html += '<h3><a onclick="window.__openModal(' + idx + ');return false">' + highlightedTitle + '</a></h3>';
       html += '<div class="snippet">' + highlighted + '</div>';
       html += '<div class="meta-row">';
-      html += '<span>pes: ' + weightPct + '% <span class="weight-bar"><span class="weight-fill" style="width:' + weightPct + '%"></span></span></span>';
-      html += '<span>rellevància: ' + scoreStr + '</span>';
+      html += '<span>weight: ' + weightPct + '% <span class="weight-bar"><span class="weight-fill" style="width:' + weightPct + '%"></span></span></span>';
+      html += '<span>score: ' + scoreStr + '</span>';
       html += '</div>';
       html += '</div>';
     });
@@ -245,6 +245,7 @@
   window.__next = function () { doSearch(currentPage + 1); };
   window.__triggerSearch = function () { doSearch(1); };
   window.__openModal = function (idx) { if (currentHits[idx]) openModal(currentHits[idx]); };
+  window.closeModal = closeModal;
   window.__copy = function (btn) {
     var text = btn.parentElement.textContent.replace(/^Copia/, '').trim();
     navigator.clipboard.writeText(text).then(function () {
