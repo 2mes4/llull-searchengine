@@ -207,7 +207,7 @@ input.addEventListener('input', () => {
 docker run -d --name llull \
   -p 8080:8080 \
   -e AUTH_TOKEN=my-secret-token \
-  llull-searchengine \
+  ericmora/llull-searchengine \
   -port 8080 -workers 4
 
 # With compose
@@ -256,7 +256,7 @@ llull -datasource '{"type":"mongodb","connection":"mongodb://host:27017","collec
 
 Two library packages are available:
 
-- **React** (`npm install @llull/search-components`)
+- **React** (`npm install llull-search-components`)
 - **Flutter** (`flutter pub add llull_search_components`)
 
 See `ui-components/react/` and `ui-components/flutter/` for full docs.

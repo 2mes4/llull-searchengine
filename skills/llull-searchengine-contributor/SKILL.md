@@ -95,10 +95,16 @@ See existing connectors for reference: `internal/datasource/postgres/`, `interna
 
 ### React
 
-Create a component in `ui-components/react/src/`:
+Install from npm:
+
+```bash
+npm install llull-search-components
+```
+
+Create a component:
 
 ```jsx
-import { useLlullSearch } from '../src/useLlullSearch';
+import { useLlullSearch } from 'llull-search-components';
 
 function MySearch() {
   const { results, search, status } = useLlullSearch({ host: 'http://localhost:8180' });
@@ -111,7 +117,14 @@ function MySearch() {
 
 ### Flutter
 
-Create a widget in `ui-components/flutter/lib/`:
+Add to pubspec.yaml:
+
+```yaml
+dependencies:
+  llull_search_components: ^0.1.0
+```
+
+Create a widget:
 
 ```dart
 import 'package:llull_search_components/llull_search_components.dart';

@@ -2,10 +2,10 @@
 
 Plug-and-play search UI components for React and Flutter. Connect to any Llull server instance with a single configuration line.
 
-## React (`@llull/search-components`)
+## React (`llull-search-components`)
 
 ```bash
-npm install @llull/search-components
+npm install llull-search-components
 ```
 
 ### `<LlullSearchDropdown />`
@@ -13,7 +13,7 @@ npm install @llull/search-components
 Search-as-you-type autocomplete dropdown. Shows matching results as the user types.
 
 ```jsx
-import { LlullSearchDropdown } from '@llull/search-components';
+import { LlullSearchDropdown } from 'llull-search-components';
 
 function MyComponent() {
   return <LlullSearchDropdown
@@ -32,7 +32,7 @@ function MyComponent() {
 Returns an array of search results with full control over rendering.
 
 ```jsx
-import { useLlullSearch } from '@llull/search-components';
+import { useLlullSearch } from 'llull-search-components';
 
 function MyComponent() {
   const { search, results, totalHits, loading, error } = useLlullSearch({
@@ -51,7 +51,7 @@ function MyComponent() {
 Full search interface with input, paginated results, and score display.
 
 ```jsx
-import { LlullSearchResults } from '@llull/search-components';
+import { LlullSearchResults } from 'llull-search-components';
 
 function MyPage() {
   return <LlullSearchResults host="http://localhost:8180" />;

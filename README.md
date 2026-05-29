@@ -250,8 +250,7 @@ deploy/docs/                    Linux installation guide
 ```bash
 docker run -d --name llull -p 8080:8080 \
   -e AUTH_TOKEN=my-secret \
-  -e DB_PATH=/data \
-  llull-searchengine -port 8080 -workers 4
+  ericmora/llull-searchengine -port 8080 -workers 4
 ```
 
 With compose:
