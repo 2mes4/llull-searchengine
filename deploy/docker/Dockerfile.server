@@ -1,6 +1,7 @@
 FROM golang:1.25-alpine AS builder
 
 ENV GOTOOLCHAIN=local
+ENV GOPROXY=direct
 
 WORKDIR /build
 
