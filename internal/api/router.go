@@ -12,7 +12,7 @@ func NewRouter(h *Handlers) http.Handler {
 
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"*"},
-		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
+		AllowedMethods:   []string{"GET", "POST", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 		AllowCredentials: false,
 		MaxAge:           300,
@@ -28,6 +28,7 @@ func NewRouter(h *Handlers) http.Handler {
 
 	r.Post("/v1/{index}/index", h.Index)
 	r.Get("/v1/{index}/search", h.Search)
+	r.Delete("/v1/{index}/documents/{id}", h.DeleteDocument)
 
 	return r
 }

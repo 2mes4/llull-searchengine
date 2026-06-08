@@ -122,6 +122,29 @@ func (h *Handlers) Index(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"status": "ok", "index": idx})
 }
 
+func (h *Handlers) DeleteDocument(w http.ResponseWriter, r *http.Request) {
+	idx := h.resolveIndex(r)
+	docID := r.PathValue("id")
+
+	if docID == "" {
+		http.Error(w, `{"error":"missing id"}`, http.StatusBadRequest)
+		return
+	}
+
+	authHeader := r.Header.Get("Authorization")
+	expected := fmt.Sprintf("Bearer %s", h.authToken)
+	if authHeader != expected {
+		http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
+		return
+	}
+
+	eng := h.manager.GetOrCreateIndex(idx)
+	eng.DeleteDocument(docID)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "ok", "index": idx})
+}
+
 func (h *Handlers) Search(w http.ResponseWriter, r *http.Request) {
 	idx := h.resolveIndex(r)
 	query := r.URL.Query().Get("q")
