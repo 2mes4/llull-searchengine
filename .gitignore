@@ -6,3 +6,5 @@ seed.json
 dist/
 node_modules/
 .pub-cache/
+/llull-server
+/server

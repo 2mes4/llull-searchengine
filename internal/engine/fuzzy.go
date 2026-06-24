@@ -82,7 +82,7 @@ func levenshteinDFSRecursive(
 	if len(node.DocIDs) > 0 {
 		lastVal := currentRow[len(query)]
 		if lastVal <= maxDist {
-			for _, id := range node.DocIDs {
+			for id := range node.DocIDs {
 				result[id] = struct{}{}
 			}
 		}

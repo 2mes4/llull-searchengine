@@ -2,7 +2,7 @@ package engine
 
 type TrieNode struct {
 	Children map[rune]*TrieNode
-	DocIDs   []string
+	DocIDs   map[string]struct{}
 }
 
 func newTrieNode() *TrieNode {
@@ -13,22 +13,16 @@ func newTrieNode() *TrieNode {
 }
 
 func (n *TrieNode) addDocID(id string) {
-	for _, existing := range n.DocIDs {
-		if existing == id {
-			return
-		}
+	if n.DocIDs == nil {
+		n.DocIDs = make(map[string]struct{})
 	}
-	n.DocIDs = append(n.DocIDs, id)
+	n.DocIDs[id] = struct{}{}
 }
 
 func (n *TrieNode) removeDocID(id string) {
-	filtered := n.DocIDs[:0]
-	for _, existing := range n.DocIDs {
-		if existing != id {
-			filtered = append(filtered, existing)
-		}
+	if n.DocIDs != nil {
+		delete(n.DocIDs, id)
 	}
-	n.DocIDs = filtered
 }
 
 func insertIntoTrie(root *TrieNode, token string, docID string) {
@@ -67,10 +61,42 @@ func findPrefixNode(root *TrieNode, prefix string) *TrieNode {
 }
 
 func collectAllDocIDs(node *TrieNode, result map[string]struct{}) {
-	for _, id := range node.DocIDs {
+	for id := range node.DocIDs {
 		result[id] = struct{}{}
 	}
 	for _, child := range node.Children {
 		collectAllDocIDs(child, result)
 	}
+}
+
+func collectDocIDsLimit(root *TrieNode, prefix string, limit int) []string {
+	node := findPrefixNode(root, prefix)
+	if node == nil {
+		return nil
+	}
+	ids := make(map[string]struct{}, limit)
+	var collect func(n *TrieNode)
+	collect = func(n *TrieNode) {
+		if len(ids) >= limit {
+			return
+		}
+		for id := range n.DocIDs {
+			ids[id] = struct{}{}
+			if len(ids) >= limit {
+				return
+			}
+		}
+		for _, child := range n.Children {
+			if len(ids) >= limit {
+				return
+			}
+			collect(child)
+		}
+	}
+	collect(node)
+	result := make([]string, 0, len(ids))
+	for id := range ids {
+		result = append(result, id)
+	}
+	return result
 }

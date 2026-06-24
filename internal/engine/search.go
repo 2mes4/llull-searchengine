@@ -3,9 +3,11 @@ package engine
 import (
 	"math"
 	"sort"
+	"strings"
 )
 
 const defaultMaxExecutionPool = 1000
+const maxCollectIDs = 5000
 
 type DocMetadata struct {
 	Fields map[string]interface{}
@@ -40,17 +42,7 @@ type PaginatedResponse struct {
 }
 
 func searchByPrefix(root *TrieNode, prefix string) []string {
-	node := findPrefixNode(root, prefix)
-	if node == nil {
-		return nil
-	}
-	ids := make(map[string]struct{})
-	collectAllDocIDs(node, ids)
-	result := make([]string, 0, len(ids))
-	for id := range ids {
-		result = append(result, id)
-	}
-	return result
+	return collectDocIDsLimit(root, prefix, maxCollectIDs)
 }
 
 func searchMultiToken(root *TrieNode, tokens []string) []string {
@@ -119,25 +111,11 @@ func calculateTextScore(query string, docFields map[string]interface{}, tokens [
 }
 
 func containsExact(text, substr string) bool {
-	return len(text) >= len(substr) &&
-		(text == substr ||
-			(len(text) > len(substr) && hasSubstringAt(text, substr)))
+	return strings.Contains(text, substr)
 }
 
 func hasSubstringAt(text, substr string) bool {
-	for i := 0; i <= len(text)-len(substr); i++ {
-		match := true
-		for j := 0; j < len(substr); j++ {
-			if text[i+j] != substr[j] {
-				match = false
-				break
-			}
-		}
-		if match {
-			return true
-		}
-	}
-	return false
+	return strings.Contains(text, substr)
 }
 
 func rankResults(matchedIDs []string, req SearchRequest, metadata map[string]DocMetadata, tokens []string) PaginatedResponse {
