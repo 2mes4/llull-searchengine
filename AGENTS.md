@@ -2,108 +2,55 @@
 
 ## Project: Llull Search Engine
 
-Algolia-like search engine for databases. Written in Go. Designed to run as a sidecar on a VPS or in Kubernetes. Named after Ramon Llull.
+**Capa:** Execució
+**Funció:** Cercador semàntic multi-índex per a documents i continguts del sistema.
+**No fa:** Xat amb usuaris, execució d'agents, emmagatzematge de dades primàries.
 
-## Multi-Tenant Model
+### Responsabilitats
 
-Llull supports multi-tenant isolation via index name prefixing.
+1. **Indexació de documents**: Rep documents via API i els indexa en un trie amb persistència BoltDB.
+   Cada espai de treball té el seu propi índex (`space-{spaceId}`).
+2. **Cerca semàntica**: Permet cerques per text complet amb fuzzy matching, ranking i paginació.
+3. **Multi-índex**: Gestiona múltiples índexs independents amb TTL de descàrrega automàtica.
+4. **Connectors de dades**: Pot indexar des de PostgreSQL, MySQL, MongoDB i Firestore.
 
-Set `LLULL_TENANT_PREFIX` env var or pass `X-Tenant` header to prefix all
-index operations with `{tenant}-`. This allows the same index names to be
-used across different tenants without collision.
+### Multi-Tenant
 
-### Usage
+Els índexs es prefiquen automàticament amb el tenant.
 
 ```bash
-# Start with tenant prefix
 export LLULL_TENANT_PREFIX=makeyourcrew
 go run ./cmd/server
 ```
 
-All API calls automatically prepend the prefix to the index parameter:
-- `/v1/space-abc123/search` → internally searches `makeyourcrew-space-abc123`
+`/v1/space-abc123/search` → internament cerca `makeyourcrew-space-abc123`
 
-## Build & Run Commands
+### Sereno Logs
+
+Events a stdout en format JSON sereno: `search`, `document_indexed`, `document_deleted`,
+amb `latency_ms`, `query`, `total_hits`, `namespace`.
+
+### Build & Run
 
 ```bash
-# Build
 go build ./...
-
-# Run tests (always with -race)
 go test ./... -v -race
-
-# Generate seed data from llibres-llull text files
-go run ./cmd/server -generate-seed seed.json -seed-dir data/llibres-llull -seed-count 1000
-
-# Run server with seed data
-go run ./cmd/server -seed-file seed.json -port 8080
-
-# Docker
-docker compose -f deploy/docker-compose.yml up --build
+go run ./cmd/server -port 8080
 ```
 
-## Project Structure
+### API
 
-```
-cmd/server/main.go              Entry point (IndexManager, BoltDB, multi-index)
-internal/engine/                Core (IndexManager, trie, search, ranking, fuzzy, persist)
-internal/api/                   HTTP handlers (chi router, multi-index routes)
-internal/worker/                Buffered worker pool
-internal/datasource/            Data source abstraction layer + connectors
-internal/datasource/postgres/   PostgreSQL connector
-internal/datasource/mysql/      MySQL connector
-internal/datasource/mongodb/    MongoDB connector
-internal/seed/                  Seed data generator from text files
-data-sources/firestore/         Firebase Extension (push model)
-data-sources/postgres/          PostgreSQL connector docs + config
-data-sources/mysql/             MySQL connector docs + config
-data-sources/mongodb/           MongoDB connector docs + config
-skills/                         AI skills for contributor, deployment, datasource creation
-ui-components/react/            React component library (npm)
-ui-components/flutter/          Flutter widget library (pub.dev)
-web/                            Search UI (static HTML/CSS/JS, Google-style)
-deploy/docker/                  Dockerfiles and compose
-deploy/k8s/                     Kubernetes manifests
-deploy/docs/                    Linux installation guide
+```bash
+GET    /v1/{index}/search?q=query&limit=10
+POST   /v1/{index}/index     # { id, action: "INDEX"|"DELETE", fields }
+DELETE /v1/{index}/documents/{id}
+GET    /v1/health
 ```
 
-## Code Style
+### Key Design Decisions
 
-- No comments unless explicitly requested
-- Follow existing patterns in each package
-- Use `sync.RWMutex` for all concurrent access to the trie
-- Write-locked for index/delete, read-locked for search
-- Error types: plain `fmt.Errorf` with `%w` wrapping
-- All code and documentation in English
-- External dependencies: only `chi`, `chi/cors`, and `golang.org/x/text` for core
-- Data source connectors may import their respective database drivers
-
-## Testing
-
-- Every package must have `*_test.go` files
-- Always run with `-race` flag
-- Use `httptest.NewServer` for API integration tests
-- Use `t.Cleanup()` for resource cleanup
-
-## Key Design Decisions
-
-- **Multi-index**: `IndexManager` manages named `SearchEngine` instances. Auto-unload idle indices after configurable TTL
-- **Trie** (not Radix Tree) for simplicity — can be upgraded later
-- **Levenshtein automaton** with DFS pruning for fuzzy search
-- **Early truncation** at 1000 results before sorting for pagination performance
-- **Worker pool** with buffered channel for async indexing
-- **BoltDB persistence** — index data survives restarts via embedded key-value store
-- **Elastic License 2.0** style — source available, no cloud resale
-- **Search results** include document fields, weight, and score for UI rendering
-- **Data sources** implement the `datasource.Connector` interface for extensibility
-
-## Data Source Development
-
-See `skills/llull-searchengine-datasources-creator/SKILL.md` for the guide on building new data source connectors.
-
-Every connector must:
-1. Implement `datasource.Connector` interface
-2. Accept `datasource.Config` for connection parameters (including `Index` field)
-3. Emit `datasource.Event` objects through the callback
-4. Handle context cancellation for graceful shutdown
-5. Include a README.md in its data-sources/ directory
+- **Trie** (no Radix Tree) per simplicitat
+- **Levenshtein automaton** amb DFS pruning per fuzzy search
+- **BoltDB** per persistència embedded sense dependències externes
+- **Worker pool** amb buffered channel per indexació asíncrona
+- Connectors implementen `datasource.Connector` interface
