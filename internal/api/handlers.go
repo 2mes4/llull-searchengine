@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/2mes4/llull/internal/engine"
+	"github.com/2mes4/llull/internal/logging"
 	"github.com/2mes4/llull/internal/worker"
 )
 
@@ -61,18 +62,23 @@ func (h *Handlers) Health(w http.ResponseWriter, r *http.Request) {
 		totalDocs += count
 	}
 
+	traceID, spanID := logging.TraceFromContext(r.Context())
+	logging.Emit("info", "health check", traceID, spanID, &logging.Fields{
+		Action: &logging.Action{Type: "tool_execution", Name: "health"},
+	})
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"status":         "ok",
-		"docs_indexed":   totalDocs,
-		"data_source":    "seed",
-		"default_index":  h.manager.DefaultIndex(),
-		"indices":        indexInfo,
-		"queue_length":   h.pool.QueueLen(),
-		"goroutines":     runtime.NumGoroutine(),
-		"memory_mb":      fmt.Sprintf("%.1f", float64(m.Alloc)/1024/1024),
+		"status":          "ok",
+		"docs_indexed":    totalDocs,
+		"data_source":     "seed",
+		"default_index":   h.manager.DefaultIndex(),
+		"indices":         indexInfo,
+		"queue_length":    h.pool.QueueLen(),
+		"goroutines":      runtime.NumGoroutine(),
+		"memory_mb":       fmt.Sprintf("%.1f", float64(m.Alloc)/1024/1024),
 		"total_memory_mb": fmt.Sprintf("%.1f", float64(m.Sys)/1024/1024),
-		"uptime_sec":     int(h.startedAt.Unix()),
+		"uptime_sec":      int(h.startedAt.Unix()),
 	})
 }
 
@@ -95,22 +101,35 @@ func (h *Handlers) Indices(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) Index(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
 	idx := h.resolveIndex(r)
 
 	authHeader := r.Header.Get("Authorization")
 	expected := fmt.Sprintf("Bearer %s", h.authToken)
 	if authHeader != expected {
+		traceID, spanID := logging.TraceFromContext(r.Context())
+		logging.Emit("warn", "unauthorized index attempt", traceID, spanID, &logging.Fields{
+			Action: &logging.Action{Type: "tool_execution", Name: "index"},
+		})
 		http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
 		return
 	}
 
 	var payload engine.IndexPayload
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		traceID, spanID := logging.TraceFromContext(r.Context())
+		logging.Emit("warn", "invalid index payload", traceID, spanID, &logging.Fields{
+			Action: &logging.Action{Type: "tool_execution", Name: "index"},
+		})
 		http.Error(w, `{"error":"invalid json"}`, http.StatusBadRequest)
 		return
 	}
 
 	if payload.ID == "" {
+		traceID, spanID := logging.TraceFromContext(r.Context())
+		logging.Emit("warn", "index payload missing id", traceID, spanID, &logging.Fields{
+			Action: &logging.Action{Type: "tool_execution", Name: "index"},
+		})
 		http.Error(w, `{"error":"missing id"}`, http.StatusBadRequest)
 		return
 	}
@@ -126,12 +145,28 @@ func (h *Handlers) Index(w http.ResponseWriter, r *http.Request) {
 		eng.DeleteDocument(payload.ID)
 	}
 
+	actionName := "index"
+	if payload.Action == "DELETE" {
+		actionName = "deleteDocument"
+	}
+	traceID, spanID := logging.TraceFromContext(r.Context())
+	logging.Emit("info", "document "+actionName, traceID, spanID, &logging.Fields{
+		Action:    &logging.Action{Type: "tool_execution", Name: actionName},
+		LatencyMs: time.Since(start).Milliseconds(),
+		Namespace: h.tenantPrefix,
+		Extra: map[string]interface{}{
+			"doc_id": payload.ID,
+			"index":  idx,
+		},
+	})
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
 	json.NewEncoder(w).Encode(map[string]string{"status": "ok", "index": idx})
 }
 
 func (h *Handlers) DeleteDocument(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
 	idx := h.resolveIndex(r)
 	docID := r.PathValue("id")
 
@@ -150,15 +185,31 @@ func (h *Handlers) DeleteDocument(w http.ResponseWriter, r *http.Request) {
 	eng := h.manager.GetOrCreateIndex(idx)
 	eng.DeleteDocument(docID)
 
+	traceID, spanID := logging.TraceFromContext(r.Context())
+	logging.Emit("info", "document deleted", traceID, spanID, &logging.Fields{
+		Action:    &logging.Action{Type: "tool_execution", Name: "deleteDocument"},
+		LatencyMs: time.Since(start).Milliseconds(),
+		Namespace: h.tenantPrefix,
+		Extra: map[string]interface{}{
+			"doc_id": docID,
+			"index":  idx,
+		},
+	})
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"status": "ok", "index": idx})
 }
 
 func (h *Handlers) Search(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
 	idx := h.resolveIndex(r)
 	query := r.URL.Query().Get("q")
 
 	if query == "" {
+		traceID, spanID := logging.TraceFromContext(r.Context())
+		logging.Emit("info", "empty search query", traceID, spanID, &logging.Fields{
+			Action: &logging.Action{Type: "tool_execution", Name: "search"},
+		})
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(engine.PaginatedResponse{
 			Hits:        []engine.SearchResult{},
@@ -181,7 +232,6 @@ func (h *Handlers) Search(w http.ResponseWriter, r *http.Request) {
 		eng = h.manager.GetOrCreateIndex(idx)
 	}
 
-	start := time.Now()
 	req := engine.SearchRequest{
 		Query:        query,
 		UseWeight:    useWeight,
@@ -194,6 +244,19 @@ func (h *Handlers) Search(w http.ResponseWriter, r *http.Request) {
 	result := eng.Search(req)
 	result.QueryTime = time.Since(start).Microseconds()
 	result.Index = idx
+
+	traceID, spanID := logging.TraceFromContext(r.Context())
+	logging.Emit("info", "search completed", traceID, spanID, &logging.Fields{
+		Action:    &logging.Action{Type: "tool_execution", Name: "search"},
+		LatencyMs: time.Since(start).Milliseconds(),
+		Namespace: h.tenantPrefix,
+		Extra: map[string]interface{}{
+			"index":         idx,
+			"query":         query,
+			"total_hits":    result.TotalHits,
+			"query_time_us": result.QueryTime,
+		},
+	})
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(result)

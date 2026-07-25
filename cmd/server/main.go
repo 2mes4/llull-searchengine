@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -18,6 +17,7 @@ import (
 	"github.com/2mes4/llull/internal/datasource"
 	"github.com/2mes4/llull/internal/datasource/postgres"
 	"github.com/2mes4/llull/internal/engine"
+	"github.com/2mes4/llull/internal/logging"
 	"github.com/2mes4/llull/internal/seed"
 	"github.com/2mes4/llull/internal/worker"
 )
@@ -46,6 +46,9 @@ func main() {
 		*dbPath = "/data"
 	}
 
+	tid := logging.NewTraceID()
+	sid := logging.NewSpanID()
+
 	if *generateSeed != "" {
 		textsDir := *seedDir
 		if textsDir == "" {
@@ -58,11 +61,17 @@ func main() {
 		if len(texts) == 0 {
 			texts, names = seed.EmbedFallbackTexts()
 		}
-		log.Printf("Loaded %d text files, generating up to %d documents to %s...", len(texts), *seedCount, *generateSeed)
+		logging.Emit("info", fmt.Sprintf("Loaded %d text files, generating up to %d documents to %s", len(texts), *seedCount, *generateSeed), tid, sid, &logging.Fields{
+			Action: &logging.Action{Type: "lifecycle", Name: "seed"},
+		})
 		if err := seed.GenerateSeedFile(*generateSeed, texts, names, *seedCount); err != nil {
-			log.Fatalf("Failed to generate seed file: %v", err)
+			logging.Emit("fatal", fmt.Sprintf("Failed to generate seed file: %v", err), tid, sid, &logging.Fields{
+				Action: &logging.Action{Type: "lifecycle", Name: "seed"},
+			})
 		}
-		log.Printf("Seed file generated successfully")
+		logging.Emit("info", "Seed file generated successfully", tid, sid, &logging.Fields{
+			Action: &logging.Action{Type: "lifecycle", Name: "seed"},
+		})
 		return
 	}
 
@@ -72,7 +81,9 @@ func main() {
 
 	tenantPrefix := os.Getenv("LLULL_TENANT_PREFIX")
 	if tenantPrefix != "" {
-		log.Printf("Tenant prefix enabled: %q", tenantPrefix)
+		logging.Emit("info", fmt.Sprintf("Tenant prefix enabled: %q", tenantPrefix), tid, sid, &logging.Fields{
+			Action: &logging.Action{Type: "lifecycle", Name: "startup"},
+		})
 	}
 
 	handlers := api.NewHandlers(mgr, pool, *authToken, tenantPrefix)
@@ -109,9 +120,13 @@ func main() {
 	}
 
 	go func() {
-		log.Printf("Llull search engine running on :%d (default index: %q)", *port, *defaultIndex)
+		logging.Emit("info", fmt.Sprintf("Llull search engine running on :%d (default index: %q)", *port, *defaultIndex), tid, sid, &logging.Fields{
+			Action: &logging.Action{Type: "lifecycle", Name: "startup"},
+		})
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Server error: %v", err)
+			logging.Emit("fatal", fmt.Sprintf("Server error: %v", err), tid, sid, &logging.Fields{
+				Action: &logging.Action{Type: "lifecycle", Name: "startup"},
+			})
 		}
 	}()
 
@@ -119,7 +134,9 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	log.Println("Shutting down server...")
+	logging.Emit("info", "Shutting down server...", tid, sid, &logging.Fields{
+		Action: &logging.Action{Type: "lifecycle", Name: "shutdown"},
+	})
 	cancel()
 	mgr.Stop()
 	pool.Stop()
@@ -127,20 +144,31 @@ func main() {
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer shutdownCancel()
 	srv.Shutdown(shutdownCtx)
-	log.Println("Server stopped")
+	logging.Emit("info", "Server stopped", tid, sid, &logging.Fields{
+		Action: &logging.Action{Type: "lifecycle", Name: "shutdown"},
+	})
 }
 
 func loadSeedData(pool *worker.Pool, path string) {
-	log.Printf("Loading seed data from %s...", path)
+	tid := logging.NewTraceID()
+	sid := logging.NewSpanID()
+
+	logging.Emit("info", fmt.Sprintf("Loading seed data from %s", path), tid, sid, &logging.Fields{
+		Action: &logging.Action{Type: "lifecycle", Name: "seed"},
+	})
 
 	docs, err := seed.LoadSeedFile(path)
 	if err != nil {
-		log.Printf("Warning: could not load seed file: %v", err)
+		logging.Emit("warn", fmt.Sprintf("Could not load seed file: %v", err), tid, sid, &logging.Fields{
+			Action: &logging.Action{Type: "lifecycle", Name: "seed"},
+		})
 		return
 	}
 
 	if len(docs) == 0 {
-		log.Println("Warning: seed file is empty, no documents to index")
+		logging.Emit("warn", "Seed file is empty, no documents to index", tid, sid, &logging.Fields{
+			Action: &logging.Action{Type: "lifecycle", Name: "seed"},
+		})
 		return
 	}
 
@@ -153,13 +181,20 @@ func loadSeedData(pool *worker.Pool, path string) {
 		}
 	}
 
-	log.Printf("Enqueued %d/%d documents for indexing", enqueued, len(payloads))
+	logging.Emit("info", fmt.Sprintf("Enqueued %d/%d documents for indexing", enqueued, len(payloads)), tid, sid, &logging.Fields{
+		Action: &logging.Action{Type: "lifecycle", Name: "seed"},
+	})
 
 	b, _ := json.MarshalIndent(docs[0], "", "  ")
-	log.Printf("Sample document: %s", string(b))
+	logging.Emit("info", fmt.Sprintf("Sample document: %s", string(b)), tid, sid, &logging.Fields{
+		Action: &logging.Action{Type: "lifecycle", Name: "seed"},
+	})
 }
 
 func startDatasource(ctx context.Context, dsType string, mgr *engine.IndexManager, pool *worker.Pool) {
+	tid := logging.NewTraceID()
+	sid := logging.NewSpanID()
+
 	dsIndex := os.Getenv("DATASOURCE_INDEX")
 	if dsIndex == "" {
 		dsIndex = "default"
@@ -182,7 +217,9 @@ func startDatasource(ctx context.Context, dsType string, mgr *engine.IndexManage
 	}
 
 	if cfg.Connection == "" || cfg.Collection == "" {
-		log.Printf("Datasource %s: missing CONNECTION or COLLECTION, skipping", dsType)
+		logging.Emit("warn", fmt.Sprintf("Datasource %s: missing CONNECTION or COLLECTION, skipping", dsType), tid, sid, &logging.Fields{
+			Action: &logging.Action{Type: "lifecycle", Name: "datasource"},
+		})
 		return
 	}
 
@@ -191,17 +228,23 @@ func startDatasource(ctx context.Context, dsType string, mgr *engine.IndexManage
 	case "postgres":
 		conn = &postgres.Connector{}
 	default:
-		log.Printf("Unsupported datasource type: %s", dsType)
+		logging.Emit("error", fmt.Sprintf("Unsupported datasource type: %s", dsType), tid, sid, &logging.Fields{
+			Action: &logging.Action{Type: "lifecycle", Name: "datasource"},
+		})
 		return
 	}
 
 	if err := conn.Connect(ctx, cfg); err != nil {
-		log.Printf("Datasource connect error: %v", err)
+		logging.Emit("error", fmt.Sprintf("Datasource connect error: %v", err), tid, sid, &logging.Fields{
+			Action: &logging.Action{Type: "lifecycle", Name: "datasource"},
+		})
 		return
 	}
 	defer conn.Close()
 
-	log.Printf("Starting %s datasource sync (index=%s, collection=%s)", dsType, dsIndex, cfg.Collection)
+	logging.Emit("info", fmt.Sprintf("Starting %s datasource sync (index=%s, collection=%s)", dsType, dsIndex, cfg.Collection), tid, sid, &logging.Fields{
+		Action: &logging.Action{Type: "lifecycle", Name: "datasource"},
+	})
 
 	conn.Sync(ctx, func(ev datasource.Event) {
 		payload := engine.IndexPayload{

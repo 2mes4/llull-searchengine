@@ -1,9 +1,10 @@
 package api
 
 import (
-	"log"
 	"net/http"
 	"time"
+
+	"github.com/2mes4/llull/internal/logging"
 )
 
 type responseWriter struct {
@@ -19,8 +20,13 @@ func (rw *responseWriter) WriteHeader(code int) {
 func loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
+		ctx, traceID, spanID := logging.WithTraceContext(r.Context())
+		r = r.WithContext(ctx)
 		rw := &responseWriter{ResponseWriter: w, status: http.StatusOK}
 		next.ServeHTTP(rw, r)
-		log.Printf("%s %s %d %s", r.Method, r.URL.Path, rw.status, time.Since(start))
+		logging.Emit("info", r.Method+" "+r.URL.Path, traceID, spanID, &logging.Fields{
+			Action:    &logging.Action{Type: "http", Name: r.Method},
+			LatencyMs: time.Since(start).Milliseconds(),
+		})
 	})
 }
