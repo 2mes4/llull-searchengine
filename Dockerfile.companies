@@ -1,0 +1,4 @@
+FROM scratch
+COPY llull-server /llull-server
+EXPOSE 8080
+ENTRYPOINT ["/llull-server"]
