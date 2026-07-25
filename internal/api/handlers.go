@@ -13,18 +13,20 @@ import (
 )
 
 type Handlers struct {
-	manager   *engine.IndexManager
-	pool      *worker.Pool
-	authToken string
-	startedAt time.Time
+	manager      *engine.IndexManager
+	pool         *worker.Pool
+	authToken    string
+	startedAt    time.Time
+	tenantPrefix string
 }
 
-func NewHandlers(mgr *engine.IndexManager, pool *worker.Pool, authToken string) *Handlers {
+func NewHandlers(mgr *engine.IndexManager, pool *worker.Pool, authToken string, tenantPrefix string) *Handlers {
 	return &Handlers{
-		manager:   mgr,
-		pool:      pool,
-		authToken: authToken,
-		startedAt: time.Now(),
+		manager:      mgr,
+		pool:         pool,
+		authToken:    authToken,
+		startedAt:    time.Now(),
+		tenantPrefix: tenantPrefix,
 	}
 }
 
@@ -32,6 +34,13 @@ func (h *Handlers) resolveIndex(r *http.Request) string {
 	idx := r.PathValue("index")
 	if idx == "" {
 		idx = h.manager.DefaultIndex()
+	}
+	prefix := r.Header.Get("X-Tenant")
+	if prefix == "" {
+		prefix = h.tenantPrefix
+	}
+	if prefix != "" {
+		idx = prefix + "-" + idx
 	}
 	return idx
 }

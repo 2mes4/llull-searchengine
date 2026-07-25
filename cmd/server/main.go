@@ -70,7 +70,12 @@ func main() {
 	eng := mgr.GetOrCreateIndex(*defaultIndex)
 	pool := worker.NewPool(eng, *bufferSize, *workers)
 
-	handlers := api.NewHandlers(mgr, pool, *authToken)
+	tenantPrefix := os.Getenv("LLULL_TENANT_PREFIX")
+	if tenantPrefix != "" {
+		log.Printf("Tenant prefix enabled: %q", tenantPrefix)
+	}
+
+	handlers := api.NewHandlers(mgr, pool, *authToken, tenantPrefix)
 	router := api.NewRouter(handlers)
 
 	if *seedFile != "" {

@@ -4,6 +4,25 @@
 
 Algolia-like search engine for databases. Written in Go. Designed to run as a sidecar on a VPS or in Kubernetes. Named after Ramon Llull.
 
+## Multi-Tenant Model
+
+Llull supports multi-tenant isolation via index name prefixing.
+
+Set `LLULL_TENANT_PREFIX` env var or pass `X-Tenant` header to prefix all
+index operations with `{tenant}-`. This allows the same index names to be
+used across different tenants without collision.
+
+### Usage
+
+```bash
+# Start with tenant prefix
+export LLULL_TENANT_PREFIX=makeyourcrew
+go run ./cmd/server
+```
+
+All API calls automatically prepend the prefix to the index parameter:
+- `/v1/space-abc123/search` → internally searches `makeyourcrew-space-abc123`
+
 ## Build & Run Commands
 
 ```bash

@@ -18,7 +18,7 @@ func setupTestAPI(t *testing.T) (*httptest.Server, *engine.SearchEngine, *engine
 	mgr := engine.NewIndexManager(t.TempDir(), 30*time.Minute, "test")
 	pool := worker.NewPool(eng, 100, 2)
 	t.Cleanup(func() { pool.Stop() })
-	handlers := NewHandlers(mgr, pool, "test-token")
+	handlers := NewHandlers(mgr, pool, "test-token", "")
 	router := NewRouter(handlers)
 	return httptest.NewServer(router), eng, mgr
 }
